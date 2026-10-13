@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateBookingStatus } from '@/lib/data/jobs';
+import { updateBookingStatus } from '@/lib/data/booking-client';
 
 const WORKER_NEXT: Record<string, { label: string; to: string }[]> = {
   requested: [

@@ -2,22 +2,39 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
+interface AddressRow {
+  id: string;
+  label: string;
+  full_address: string;
+  district: string | null;
+  pin_code: string | null;
+}
+
 export default function AddressesPage() {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<AddressRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ label: '', full_address: '', district: '', pin_code: '' });
 
   const load = async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setLoading(false); return; }
 
-    const { data: cp } = await supabase.from('customer_profiles').select('id').eq('user_id', user.id).maybeSingle();
+    const { data: cp } = await supabase
+      .from('customer_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
     if (!cp) { setLoading(false); return; }
 
     const { data } = await supabase
-      .from('customer_addresses').select('*').eq('customer_id', cp.id).order('created_at', { ascending: false });
-    setRows(data || []);
+      .from('customer_addresses')
+      .select('id, label, full_address, district, pin_code')
+      .eq('customer_id', cp.id)
+      .order('created_at', { ascending: false });
+
+    setRows((data as AddressRow[]) || []);
     setLoading(false);
   };
 
@@ -29,9 +46,18 @@ export default function AddressesPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    let { data: cp } = await supabase.from('customer_profiles').select('id').eq('user_id', user.id).maybeSingle();
+    let { data: cp } = await supabase
+      .from('customer_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
     if (!cp) {
-      const { data } = await supabase.from('customer_profiles').insert({ user_id: user.id }).select('id').single();
+      const { data } = await supabase
+        .from('customer_profiles')
+        .insert({ user_id: user.id })
+        .select('id')
+        .single();
       cp = data;
     }
     if (!cp) return;

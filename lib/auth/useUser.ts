@@ -22,7 +22,7 @@ export function useUser() {
           .select('primary_role')
           .eq('id', data.user.id)
           .single();
-        setUser({ ...data.user, role: profile?.primary_role as UserRole });
+        setUser({ ...data.user, role: profile?.primary_role as UserRole | undefined });
       }
       setLoading(false);
     });
@@ -34,7 +34,7 @@ export function useUser() {
           .select('primary_role')
           .eq('id', session.user.id)
           .single();
-        setUser({ ...session.user, role: profile?.primary_role as UserRole });
+        setUser({ ...session.user, role: profile?.primary_role as UserRole | undefined });
       } else {
         setUser(null);
       }

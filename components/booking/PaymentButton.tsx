@@ -1,6 +1,18 @@
 'use client';
 import { useState } from 'react';
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+interface RazorpayResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
 export default function PaymentButton({ booking, amount }: { booking: any; amount: number }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -25,21 +37,18 @@ export default function PaymentButton({ booking, amount }: { booking: any; amoun
       const { loadScript } = await import('@/lib/payments/razorpay-client');
       await loadScript();
 
-      const rzp = new (window as any).Razorpay({
+      const rzp = new window.Razorpay({
         key: data.key_id,
         amount: data.amount,
         currency: data.currency,
         name: 'KaamConnect',
         description: `Booking ${booking.id.slice(0, 8)}`,
         order_id: data.order_id,
-        handler: async (response: any) => {
+        handler: async (response: RazorpayResponse) => {
           await fetch('/api/payments/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ...response,
-              booking_id: booking.id,
-            }),
+            body: JSON.stringify({ ...response, booking_id: booking.id }),
           });
           window.location.href = '/payment-result?status=success';
         },

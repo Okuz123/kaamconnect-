@@ -1,7 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Navigation } from 'lucide-react';
+import { Search, Navigation, SlidersHorizontal, X } from 'lucide-react';
 import { RADIUS_OPTIONS } from '@/lib/utils/geo';
 import { useLang } from '@/lib/i18n/useLang';
 
@@ -17,6 +17,7 @@ export default function WorkerFilters({ categories }: { categories: { id: string
   const [lat, setLat] = useState(params.get('lat') || '');
   const [lng, setLng] = useState(params.get('lng') || '');
   const [locating, setLocating] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const apply = (overrides: Record<string, string> = {}) => {
     const sp = new URLSearchParams();
@@ -27,7 +28,8 @@ export default function WorkerFilters({ categories }: { categories: { id: string
     if (lat) sp.set('lat', lat);
     if (lng) sp.set('lng', lng);
     for (const [k, v] of Object.entries(overrides)) {
-      if (v) sp.set(k, v); else sp.delete(k);
+      if (v) sp.set(k, v);
+      else sp.delete(k);
     }
     router.push('/workers?' + sp.toString());
   };
@@ -39,7 +41,8 @@ export default function WorkerFilters({ categories }: { categories: { id: string
       (pos) => {
         const la = pos.coords.latitude.toFixed(6);
         const lo = pos.coords.longitude.toFixed(6);
-        setLat(la); setLng(lo);
+        setLat(la);
+        setLng(lo);
         setLocating(false);
         apply({ lat: la, lng: lo, r: String(radius) });
       },
@@ -47,57 +50,95 @@ export default function WorkerFilters({ categories }: { categories: { id: string
     );
   };
 
+  const clearAll = () => {
+    setQ(''); setCat(''); setRadius(3); setSort('nearest'); setLat(''); setLng('');
+    router.push('/workers');
+  };
+
+  const hasFilters = q || cat || lat || sort !== 'nearest' || radius !== 3;
+
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6 space-y-3">
-      <div className="grid md:grid-cols-[1fr_auto_auto] gap-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+    <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-6 shadow-[0_1px_3px_rgb(0,0,0,0.02)]">
+      <div className="flex gap-2 mb-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
-            value={q} onChange={(e) => setQ(e.target.value)}
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && apply()}
             placeholder={t('hero.search')}
-            className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
+            className="w-full pl-10 pr-3 py-3 bg-gray-50 border border-transparent rounded-xl text-sm focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition"
           />
         </div>
-        <select
-          value={cat} onChange={(e) => { setCat(e.target.value); apply({ cat: e.target.value }); }}
-          className="px-3 py-2.5 border border-gray-300 rounded-lg min-w-[160px]"
-        >
-          <option value="">All categories</option>
-          {categories.map((c) => <option key={c.id} value={c.slug}>{c.name_en}</option>)}
-        </select>
         <button
-          onClick={useMyLocation} disabled={locating}
-          className="px-4 py-2.5 border border-brand-500 text-brand-600 rounded-lg font-medium hover:bg-brand-50 flex items-center gap-2"
+          onClick={useMyLocation}
+          disabled={locating}
+          className={
+            'px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 transition ' +
+            (lat ? 'bg-brand-600 text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-transparent')
+          }
         >
           <Navigation className="w-4 h-4" />
-          {locating ? '...' : t('hero.useLocation')}
+          <span className="hidden sm:inline">{locating ? '…' : lat ? 'Located' : 'Near me'}</span>
+        </button>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="md:hidden px-3 py-3 rounded-xl bg-gray-50 text-gray-700 hover:bg-gray-100"
+        >
+          <SlidersHorizontal className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 text-sm">
-        <div className="flex items-center gap-1">
-          <span className="text-gray-500">{t('hero.radius')}:</span>
-          {RADIUS_OPTIONS.map((r) => (
-            <button
-              key={r} onClick={() => { setRadius(r); apply({ r: String(r) }); }}
-              className={
-                'px-2.5 py-1 rounded-full text-xs font-medium border ' +
-                (radius === r ? 'bg-brand-600 text-white border-brand-600' : 'bg-white border-gray-300 text-gray-700')
-              }
-            >{r} km</button>
-          ))}
+      <div className={'md:flex md:items-center md:justify-between gap-3 ' + (expanded ? 'block' : 'hidden md:flex')}>
+        <div className="flex flex-wrap items-center gap-2 mb-3 md:mb-0">
+          <select
+            value={cat}
+            onChange={(e) => { setCat(e.target.value); apply({ cat: e.target.value }); }}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:border-brand-500 outline-none"
+          >
+            <option value="">All categories</option>
+            {categories.map((c) => <option key={c.id} value={c.slug}>{c.name_en}</option>)}
+          </select>
+
+          <div className="flex items-center gap-1">
+            {RADIUS_OPTIONS.map((r) => (
+              <button
+                key={r}
+                onClick={() => { setRadius(r); apply({ r: String(r) }); }}
+                className={
+                  'px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition ' +
+                  (radius === r
+                    ? 'bg-brand-600 text-white border-brand-600'
+                    : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400')
+                }
+              >
+                {r}km
+              </button>
+            ))}
+          </div>
         </div>
 
-        <select
-          value={sort} onChange={(e) => { setSort(e.target.value); apply({ sort: e.target.value }); }}
-          className="ml-auto px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-        >
-          <option value="nearest">Nearest</option>
-          <option value="rating">Best rated</option>
-          <option value="price">Lowest price</option>
-          <option value="experience">Most experienced</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            value={sort}
+            onChange={(e) => { setSort(e.target.value); apply({ sort: e.target.value }); }}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:border-brand-500 outline-none"
+          >
+            <option value="nearest">Sort: Nearest</option>
+            <option value="rating">Best rated</option>
+            <option value="price">Lowest price</option>
+            <option value="experience">Most experienced</option>
+          </select>
+
+          {hasFilters && (
+            <button
+              onClick={clearAll}
+              className="text-xs font-medium text-gray-500 hover:text-red-600 flex items-center gap-1 px-2 py-1.5"
+            >
+              <X className="w-3 h-3" /> Clear
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

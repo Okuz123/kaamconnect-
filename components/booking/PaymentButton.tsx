@@ -1,10 +1,9 @@
 'use client';
 import { useState } from 'react';
+import { Loader2, Lock } from 'lucide-react';
 
 declare global {
-  interface Window {
-    Razorpay: any;
-  }
+  interface Window { Razorpay: any; }
 }
 
 interface RazorpayResponse {
@@ -29,7 +28,7 @@ export default function PaymentButton({ booking, amount }: { booking: any; amoun
       if (!res.ok) throw new Error(data.error || 'Failed to create order');
 
       if (!data.key_id) {
-        setErr('Razorpay not configured. Add RAZORPAY_KEY_ID + SECRET to environment.');
+        setErr('Payments are not yet activated. Ask the platform admin to add Razorpay keys.');
         setBusy(false);
         return;
       }
@@ -63,15 +62,18 @@ export default function PaymentButton({ booking, amount }: { booking: any; amoun
   };
 
   return (
-    <div className="mt-4">
+    <div className="mt-5">
       <button
         onClick={startPayment} disabled={busy}
-        className="w-full bg-success-600 hover:bg-success-700 disabled:opacity-60 text-white font-semibold py-3 rounded-lg"
+        className="w-full flex items-center justify-center gap-2 bg-success-600 hover:bg-success-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl shadow-sm hover:shadow-md transition"
       >
+        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
         {busy ? 'Opening payment…' : `Pay ₹${amount.toLocaleString('en-IN')}`}
       </button>
-      {err && <p className="mt-2 text-sm text-red-600">{err}</p>}
-      <p className="mt-2 text-xs text-gray-400">Payments run in sandbox mode until Razorpay live keys are configured.</p>
+      {err && <div className="mt-3 text-sm text-amber-700 bg-amber-50 border border-amber-100 p-3 rounded-xl">{err}</div>}
+      <p className="mt-3 text-xs text-gray-400 text-center flex items-center justify-center gap-1.5">
+        <Lock className="w-3 h-3" /> Secured by Razorpay. Runs in sandbox until live keys are added.
+      </p>
     </div>
   );
 }

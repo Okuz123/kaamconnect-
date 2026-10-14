@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import Badge from '@/components/ui/Badge';
 
 export default async function AdminPayments() {
   const supabase = createClient();
@@ -10,17 +11,28 @@ export default async function AdminPayments() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-4">Payments</h1>
-      <div className="bg-white border border-gray-200 rounded-xl divide-y divide-gray-100">
-        {(rows || []).length === 0 ? <div className="p-6 text-gray-500 text-sm">No transactions yet.</div> :
-          rows!.map((p) => (
-            <div key={p.id} className="p-4 flex justify-between text-sm">
-              <span>{p.provider_payment_id || p.id.slice(0, 8)}</span>
-              <span className="capitalize">{p.status}</span>
-              <span className="font-semibold">₹{Number(p.amount).toLocaleString('en-IN')}</span>
-            </div>
-          ))
-        }
+      <div className="mb-6">
+        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 mb-1">Payments</h1>
+        <p className="text-gray-500 text-sm">All transactions across the platform.</p>
+      </div>
+
+      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+        {(rows || []).length === 0 ? (
+          <div className="p-8 text-center text-gray-500 text-sm">No transactions yet.</div>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {rows!.map((p) => (
+              <li key={p.id} className="flex items-center justify-between px-6 py-4">
+                <div>
+                  <div className="font-semibold text-gray-900">{p.provider_payment_id || p.id.slice(0, 12)}</div>
+                  <div className="text-xs text-gray-400">{new Date(p.created_at).toLocaleDateString()}</div>
+                </div>
+                <Badge tone={p.status === 'paid' ? 'success' : p.status === 'failed' ? 'warning' : 'brand'}>{p.status}</Badge>
+                <span className="font-bold text-gray-900">₹{Number(p.amount).toLocaleString('en-IN')}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

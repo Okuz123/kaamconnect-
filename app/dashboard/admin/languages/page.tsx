@@ -9,19 +9,29 @@ export default async function AdminLanguages() {
     return acc;
   }, {});
 
+  const LANGS = [
+    { code: 'en', label: 'English', native: 'English' },
+    { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
+    { code: 'ur', label: 'Urdu', native: 'اردو' },
+    { code: 'dogri', label: 'Dogri', native: 'डोगरी' },
+    { code: 'ks', label: 'Kashmiri', native: 'کٲشُر' },
+  ];
+
   return (
     <div>
-      <h1 className="text-xl font-bold mb-4">Languages & Translations</h1>
-      <div className="bg-white border border-gray-200 rounded-xl p-4">
-        <div className="text-sm text-gray-500 mb-3">Translation counts by language</div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          {['en','hi','ur','dogri','ks'].map((l) => (
-            <div key={l} className="text-center p-3 border border-gray-200 rounded-lg">
-              <div className="text-lg font-bold">{counts[l] || 0}</div>
-              <div className="text-xs uppercase text-gray-500">{l}</div>
-            </div>
-          ))}
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 mb-1">Languages</h1>
+        <p className="text-gray-500 text-sm">5 supported languages. Interface strings bundled; DB-driven overrides shown here.</p>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {LANGS.map((l) => (
+          <div key={l.code} className="bg-white border border-gray-100 rounded-2xl p-5 text-center">
+            <div className="text-3xl font-extrabold text-brand-700 mb-1">{counts[l.code] || 0}</div>
+            <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">{l.label}</div>
+            <div className="text-sm text-gray-700 mt-1">{l.native}</div>
+          </div>
+        ))}
       </div>
     </div>
   );

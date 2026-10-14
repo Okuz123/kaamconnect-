@@ -1,11 +1,23 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+
+const L: React.CSSProperties = {
+  display: 'block',
+  fontSize: 13,
+  fontWeight: 600,
+  marginBottom: 6,
+  marginTop: 16,
+  color: '#374151',
+};
+
+const inputCls = 'w-full px-3.5 py-3 bg-gray-50 border border-transparent rounded-xl text-sm focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition';
 
 export default function WorkerProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [categories, setCategories] = useState<{ id: string; name_en: string }[]>([]);
   const [form, setForm] = useState({
     id: '',
@@ -27,18 +39,11 @@ export default function WorkerProfilePage() {
       if (!user) return;
 
       const { data: cats } = await supabase
-        .from('skill_categories')
-        .select('id, name_en')
-        .eq('is_active', true)
-        .order('sort_order');
-
+        .from('skill_categories').select('id, name_en').eq('is_active', true).order('sort_order');
       setCategories(cats || []);
 
       const { data: wp } = await supabase
-        .from('worker_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .from('worker_profiles').select('*').eq('user_id', user.id).maybeSingle();
 
       if (wp) {
         setForm({
@@ -89,113 +94,108 @@ export default function WorkerProfilePage() {
     }
 
     setSaving(false);
-    setMsg(err ? err.message : 'Profile saved ✅');
+    setMsg(err ? { text: err.message, ok: false } : { text: 'Profile saved successfully', ok: true });
   };
 
-  if (loading) return <p className="text-gray-500">Loading…</p>;
+  if (loading) return <div className="text-center py-12 text-gray-500">Loading…</div>;
 
   return (
-    <form onSubmit={save} className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
-      <h1 className="text-xl font-bold">Worker Profile</h1>
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Public name</label>
-          <input
-            required value={form.public_name}
-            onChange={(e) => setForm({ ...form, public_name: e.target.value })}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Legal name (private)</label>
-          <input
-            value={form.legal_name}
-            onChange={(e) => setForm({ ...form, legal_name: e.target.value })}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-          />
-        </div>
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 mb-1">Worker Profile</h1>
+        <p className="text-gray-500 text-sm">Fill this so employers near you can find and book you.</p>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
-        <textarea
-          rows={3} value={form.bio}
-          onChange={(e) => setForm({ ...form, bio: e.target.value })}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-        />
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Primary skill</label>
-          <select
-            required value={form.primary_skill_id}
-            onChange={(e) => setForm({ ...form, primary_skill_id: e.target.value })}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-          >
-            <option value="">Select skill</option>
-            {categories.map((c) => <option key={c.id} value={c.id}>{c.name_en}</option>)}
-          </select>
+      <form onSubmit={save} className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8">
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label style={L}>Public name</label>
+            <input required value={form.public_name} onChange={(e) => setForm({ ...form, public_name: e.target.value })}
+              placeholder="Name shown to customers" className={inputCls} />
+          </div>
+          <div>
+            <label style={L}>Legal name (private)</label>
+            <input value={form.legal_name} onChange={(e) => setForm({ ...form, legal_name: e.target.value })}
+              placeholder="For verification only" className={inputCls} />
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Years of experience</label>
-          <input
-            type="number" min="0" value={form.years_experience}
-            onChange={(e) => setForm({ ...form, years_experience: Number(e.target.value) })}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-          />
-        </div>
-      </div>
 
-      <div className="grid sm:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Daily rate (₹)</label>
-          <input
-            type="number" min="0" value={form.daily_rate}
-            onChange={(e) => setForm({ ...form, daily_rate: e.target.value })}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Hourly rate (₹)</label>
-          <input
-            type="number" min="0" value={form.hourly_rate}
-            onChange={(e) => setForm({ ...form, hourly_rate: e.target.value })}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Work radius (km)</label>
-          <input
-            type="number" min="1" max="100" value={form.preferred_radius_km}
-            onChange={(e) => setForm({ ...form, preferred_radius_km: Number(e.target.value) })}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-          />
-        </div>
-      </div>
+        <label style={L}>Short bio</label>
+        <textarea rows={3} value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })}
+          placeholder="Tell employers about your work, experience, specialties…"
+          className={inputCls + ' resize-none'} />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Availability</label>
-        <select
-          value={form.availability}
-          onChange={(e) => setForm({ ...form, availability: e.target.value as any })}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-        >
-          <option value="available">Available</option>
-          <option value="busy">Busy</option>
-          <option value="unavailable">Unavailable</option>
-        </select>
-      </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label style={L}>Primary skill</label>
+            <select required value={form.primary_skill_id} onChange={(e) => setForm({ ...form, primary_skill_id: e.target.value })}
+              className={inputCls}>
+              <option value="">Select skill</option>
+              {categories.map((c) => <option key={c.id} value={c.id}>{c.name_en}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={L}>Years of experience</label>
+            <input type="number" min="0" value={form.years_experience}
+              onChange={(e) => setForm({ ...form, years_experience: Number(e.target.value) })}
+              className={inputCls} />
+          </div>
+        </div>
 
-      {msg && <p className={`text-sm p-3 rounded-lg ${msg.includes('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>{msg}</p>}
+        <div className="grid sm:grid-cols-3 gap-4">
+          <div>
+            <label style={L}>Daily rate (₹)</label>
+            <input type="number" min="0" value={form.daily_rate}
+              onChange={(e) => setForm({ ...form, daily_rate: e.target.value })}
+              placeholder="600" className={inputCls} />
+          </div>
+          <div>
+            <label style={L}>Hourly rate (₹)</label>
+            <input type="number" min="0" value={form.hourly_rate}
+              onChange={(e) => setForm({ ...form, hourly_rate: e.target.value })}
+              placeholder="80" className={inputCls} />
+          </div>
+          <div>
+            <label style={L}>Work radius (km)</label>
+            <input type="number" min="1" max="100" value={form.preferred_radius_km}
+              onChange={(e) => setForm({ ...form, preferred_radius_km: Number(e.target.value) })}
+              className={inputCls} />
+          </div>
+        </div>
 
-      <button
-        type="submit" disabled={saving}
-        className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-semibold py-2.5 rounded-lg"
-      >
-        {saving ? 'Saving…' : 'Save profile'}
-      </button>
-    </form>
+        <label style={L}>Availability</label>
+        <div className="grid grid-cols-3 gap-2">
+          {(['available', 'busy', 'unavailable'] as const).map((a) => (
+            <button key={a} type="button" onClick={() => setForm({ ...form, availability: a })}
+              className={
+                'py-2.5 px-3 rounded-xl text-sm font-semibold capitalize border-2 transition ' +
+                (form.availability === a
+                  ? a === 'available'
+                    ? 'bg-success-50 border-success-500 text-success-700'
+                    : a === 'busy'
+                    ? 'bg-amber-50 border-amber-500 text-amber-700'
+                    : 'bg-gray-100 border-gray-400 text-gray-700'
+                  : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300')
+              }>
+              {a}
+            </button>
+          ))}
+        </div>
+
+        {msg && (
+          <div className={'mt-5 flex items-center gap-2 text-sm p-3 rounded-xl border ' +
+            (msg.ok ? 'bg-success-50 text-success-700 border-success-100' : 'bg-red-50 text-red-600 border-red-100')}>
+            {msg.ok && <CheckCircle2 className="w-4 h-4" />}
+            {msg.text}
+          </div>
+        )}
+
+        <button disabled={saving}
+          className="w-full mt-6 flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl shadow-sm hover:shadow-md transition">
+          {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+          {saving ? 'Saving…' : 'Save profile'}
+        </button>
+      </form>
+    </div>
   );
 }

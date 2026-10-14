@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import Container from '@/components/ui/Container';
+import Sidebar from '@/components/dashboard/Sidebar';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
@@ -9,12 +10,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from('users')
-    .select('primary_role, full_name, preferred_language')
+    .select('primary_role, full_name')
     .eq('id', user.id)
     .single();
 
   const role = profile?.primary_role ?? 'customer';
-  const name = profile?.full_name ?? user.email;
+  const name = profile?.full_name ?? user.email ?? 'User';
 
   const navFor = (r: string) => {
     if (r === 'admin' || r === 'manager') {
@@ -44,29 +45,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ];
   };
 
-  const links = navFor(role);
-
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 grid md:grid-cols-[220px_1fr] gap-6">
-      <aside>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
-          <div className="text-xs text-gray-500">Signed in as</div>
-          <div className="font-semibold text-gray-900 truncate">{name}</div>
-          <div className="text-xs text-brand-600 capitalize mt-1">{role}</div>
-        </div>
-        <nav className="space-y-1">
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="block px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100"
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
-      </aside>
-      <section>{children}</section>
-    </div>
+    <Container className="py-8 md:py-10">
+      <div className="grid md:grid-cols-[240px_1fr] gap-6">
+        <Sidebar links={navFor(role)} role={role} name={name} />
+        <section>{children}</section>
+      </div>
+    </Container>
   );
 }

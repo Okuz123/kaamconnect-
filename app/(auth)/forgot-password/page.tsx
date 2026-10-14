@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { Mail, Loader2, CheckCircle2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function ForgotPasswordPage() {
@@ -23,33 +24,48 @@ export default function ForgotPasswordPage() {
 
   if (done) {
     return (
-      <>
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Check your email</h1>
-        <p className="text-sm text-gray-500 mb-6">We sent a reset link to {email}</p>
-        <Link href="/login" className="text-brand-600 hover:underline text-sm">← Back to login</Link>
-      </>
+      <div className="text-center py-8">
+        <div className="w-16 h-16 bg-success-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+          <CheckCircle2 className="w-8 h-8 text-success-600" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h1>
+        <p className="text-sm text-gray-500 mb-6">We sent a reset link to <strong>{email}</strong></p>
+        <Link href="/login" className="text-brand-600 hover:underline text-sm font-semibold">← Back to login</Link>
+      </div>
     );
   }
 
   return (
-    <>
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Reset password</h1>
-      <p className="text-sm text-gray-500 mb-6">Enter your email and we'll send you a link</p>
+    <div>
+      <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-2">Reset password</h1>
+      <p className="text-gray-500 mb-8">Enter your email and we'll send you a link.</p>
       <form onSubmit={submit} className="space-y-4">
-        <input
-          type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
+          <div className="relative">
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="w-full pl-10 pr-3 py-3 bg-gray-50 border border-transparent rounded-xl text-sm focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition"
+            />
+          </div>
+        </div>
+
+        {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded-xl">{error}</div>}
+
         <button
           type="submit" disabled={busy}
-          className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-semibold py-2.5 rounded-lg"
+          className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl shadow-sm hover:shadow-md transition"
         >
+          {busy && <Loader2 className="w-4 h-4 animate-spin" />}
           {busy ? 'Sending…' : 'Send reset link'}
         </button>
-        <Link href="/login" className="block text-center text-sm text-gray-600 hover:underline">Back to login</Link>
+
+        <Link href="/login" className="block text-center text-sm text-gray-600 hover:underline font-medium">
+          Back to login
+        </Link>
       </form>
-    </>
+    </div>
   );
 }

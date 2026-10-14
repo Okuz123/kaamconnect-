@@ -2,9 +2,16 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Mail, Lock, User, Phone, Loader2, CheckCircle2, Briefcase, Users, UserCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
-type Role = 'worker' | 'customer' | 'both';
+type Role = 'customer' | 'worker' | 'both';
+
+const ROLES: { key: Role; label: string; sub: string; Icon: any }[] = [
+  { key: 'customer', label: 'Customer', sub: 'I need to hire', Icon: Users },
+  { key: 'worker', label: 'Worker', sub: 'I want work', Icon: Briefcase },
+  { key: 'both', label: 'Both', sub: 'Hire & work', Icon: UserCheck },
+];
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -24,8 +31,7 @@ export default function RegisterForm() {
     const supabase = createClient();
 
     const { data, error: err } = await supabase.auth.signUp({
-      email,
-      password,
+      email, password,
       options: { emailRedirectTo: `${window.location.origin}/dashboard` },
     });
 
@@ -50,78 +56,111 @@ export default function RegisterForm() {
   if (success) {
     return (
       <div className="text-center py-8">
-        <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">✅</div>
-        <h3 className="font-semibold text-gray-900 mb-2">Account created</h3>
-        <p className="text-sm text-gray-600">Check your email to verify, then continue to your dashboard.</p>
+        <div className="w-16 h-16 bg-success-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+          <CheckCircle2 className="w-8 h-8 text-success-600" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Account created</h3>
+        <p className="text-sm text-gray-500 mb-6">Redirecting to your dashboard…</p>
+        <div className="flex justify-center">
+          <Loader2 className="w-5 h-5 animate-spin text-brand-600" />
+        </div>
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">I am joining as…</label>
-        <div className="grid grid-cols-3 gap-2">
-          {(['customer', 'worker', 'both'] as Role[]).map((r) => (
-            <button
-              key={r} type="button" onClick={() => setRole(r)}
-              className={
-                'py-2 px-3 rounded-lg border text-sm font-medium capitalize transition ' +
-                (role === r
-                  ? 'bg-brand-600 text-white border-brand-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400')
-              }
-            >{r}</button>
-          ))}
+    <div>
+      <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-2">Create your account</h1>
+      <p className="text-gray-500 mb-8">Join as a customer, worker, or both.</p>
+
+      <form onSubmit={submit} className="space-y-5">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">I am joining as</label>
+          <div className="grid grid-cols-3 gap-2">
+            {ROLES.map(({ key, label, sub, Icon }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setRole(key)}
+                className={
+                  'flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition ' +
+                  (role === key
+                    ? 'bg-brand-50 border-brand-500 text-brand-700'
+                    : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300')
+                }
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-sm font-bold">{label}</span>
+                <span className="text-[10px] text-gray-500">{sub}</span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Full name</label>
-        <input
-          required value={fullName} onChange={(e) => setFullName(e.target.value)}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
-        />
-      </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full name</label>
+          <div className="relative">
+            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              required value={fullName} onChange={(e) => setFullName(e.target.value)}
+              className="w-full pl-10 pr-3 py-3 bg-gray-50 border border-transparent rounded-xl text-sm focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition"
+              placeholder="Your full name"
+            />
+          </div>
+        </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-        <input
-          type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)}
-          placeholder="+91 98765 43210"
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
-        />
-      </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone</label>
+          <div className="relative">
+            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)}
+              className="w-full pl-10 pr-3 py-3 bg-gray-50 border border-transparent rounded-xl text-sm focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition"
+              placeholder="+91 98765 43210"
+            />
+          </div>
+        </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-        <input
-          type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
-        />
-      </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
+          <div className="relative">
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+              className="w-full pl-10 pr-3 py-3 bg-gray-50 border border-transparent rounded-xl text-sm focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition"
+              placeholder="you@example.com"
+            />
+          </div>
+        </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-        <input
-          type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
-          placeholder="Minimum 6 characters"
-        />
-      </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
+          <div className="relative">
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
+              className="w-full pl-10 pr-3 py-3 bg-gray-50 border border-transparent rounded-xl text-sm focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition"
+              placeholder="Minimum 6 characters"
+            />
+          </div>
+        </div>
 
-      {error && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>}
+        {error && (
+          <div className="text-sm text-red-600 bg-red-50 border border-red-100 p-3 rounded-xl">{error}</div>
+        )}
 
-      <button
-        type="submit" disabled={busy}
-        className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-semibold py-2.5 rounded-lg transition"
-      >
-        {busy ? 'Creating account…' : 'Create account'}
-      </button>
+        <button
+          type="submit" disabled={busy}
+          className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl shadow-sm hover:shadow-md transition"
+        >
+          {busy && <Loader2 className="w-4 h-4 animate-spin" />}
+          {busy ? 'Creating account…' : 'Create account'}
+        </button>
+      </form>
 
-      <p className="text-sm text-center text-gray-600">
-        Already have an account? <Link href="/login" className="text-brand-600 hover:underline font-medium">Sign in</Link>
+      <p className="text-sm text-center text-gray-600 mt-6">
+        Already have an account? <Link href="/login" className="text-brand-600 hover:underline font-semibold">Sign in</Link>
       </p>
-    </form>
+    </div>
   );
 }
